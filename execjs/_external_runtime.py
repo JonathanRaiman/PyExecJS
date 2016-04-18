@@ -116,7 +116,7 @@ class ExternalRuntime(AbstractRuntime):
             return runner_source
 
         def _extract_result(self, output):
-            output = output.decode(self._runtime._encoding)
+            # output = output.decode(self._runtime._encoding)
             output = output.replace("\r\n", "\n").replace("\r", "\n")
             output_last_line = output.split("\n")[-2]
 
