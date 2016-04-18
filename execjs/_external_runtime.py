@@ -73,29 +73,20 @@ class ExternalRuntime(AbstractRuntime):
         def _exec_(self, source):
             if self._source:
                 source = self._source + '\n' + source
-
-            (fd, filename) = tempfile.mkstemp(prefix='execjs', suffix='.js')
-            os.close(fd)
-            try:
-                with io.open(filename, "w+", encoding=self._runtime._encoding) as fp:
-                    fp.write(self._compile(source))
-                output = self._execfile(filename)
-            finally:
-                os.remove(filename)
-
+            output = self._execfile(self._compile(source))
             return self._extract_result(output)
 
         def _call(self, identifier, *args):
             args = json.dumps(args)
             return self.eval("{identifier}.apply(this, {args})".format(identifier=identifier, args=args))
 
-        def _execfile(self, filename):
-            cmd = self._runtime._binary() + [filename]
+        def _execfile(self, source):
+            cmd = self._runtime._binary()
 
             p = None
             try:
-                p = Popen(cmd, stdout=PIPE, stderr=PIPE, cwd=self._cwd)
-                stdoutdata, stderrdata = p.communicate()
+                p = Popen(cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE, cwd=self._cwd, universal_newlines=True)
+                stdoutdata, stderrdata = p.communicate(input=source)
                 ret = p.wait()
             finally:
                 del p
